@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f59e0b">
+    <link rel="icon" href="./favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+    <link rel="manifest" href='data:application/manifest+json,{"name":"Sahamku Terminal","short_name":"Sahamku","start_url":".","display":"standalone","background_color":"#020617","theme_color":"#f59e0b","icons":[{"src":"./icon-192.png","sizes":"192x192","type":"image/png"},{"src":"./icon-512.png","sizes":"512x512","type":"image/png"}]}'>
+    <title>Sahamku — Terminal Valuasi & Portofolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @layer base {
+            body { @apply bg-slate-950 text-slate-200 antialiased font-sans selection:bg-amber-500/30; }
+
+            ::-webkit-scrollbar { @apply w-1.5 h-1.5; }
+            ::-webkit-scrollbar-track { @apply bg-slate-900/50; }
+            ::-webkit-scrollbar-thumb { @apply bg-slate-700 rounded-full hover:bg-slate-600 transition-colors; }
+
+            .card { @apply bg-slate-900 border border-slate-800 rounded-xl shadow-lg relative overflow-hidden; }
+            .card-glass { @apply bg-slate-900/60 backdrop-blur-md border border-slate-700/50 rounded-xl shadow-xl; }
+
+            .input-modern { @apply bg-slate-950/50 border border-slate-700 text-slate-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 outline-none transition-all w-full font-mono text-sm shadow-inner; }
+            .label-modern { @apply text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1.5 block; }
+
+            .btn-primary { @apply bg-gradient-to-b from-amber-400 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-slate-950 font-bold px-4 py-2 rounded-lg transition-all active:scale-95 shadow-[0_0_15px_rgba(245,158,11,0.2)] border border-amber-400/50; }
+            .btn-secondary { @apply bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2 rounded-lg transition-all active:scale-95 text-sm font-medium; }
+            .btn-danger { @apply bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800 px-4 py-2 rounded-lg transition-all active:scale-95 text-sm font-medium; }
+
+            .gauge-track { @apply h-1.5 bg-slate-950 rounded-full overflow-hidden w-full relative shadow-inner border border-slate-800/50; }
+            .gauge-fill { @apply h-full rounded-full transition-all duration-1000 ease-out relative; }
+            .gauge-fill::after { content: ''; @apply absolute inset-0 bg-gradient-to-b from-white/30 to-transparent; }
+
+            .fill-good { @apply bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.5)]; }
+            .fill-mid { @apply bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 shadow-[0_0_8px_rgba(245,158,11,0.5)]; }
+            .fill-bad { @apply bg-gradient-to-r from-rose-400 via-rose-500 to-rose-600 shadow-[0_0_8px_rgba(243,64,84,0.5)]; }
+
+            .tag-good { @apply text-emerald-400 border-emerald-500/30; }
+            .tag-mid { @apply text-amber-400 border-amber-500/30; }
+            .tag-bad { @apply text-rose-400 border-rose-500/30; }
+        }
+
+        @media (hover: hover) {
+            .card-3d-hover { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease; transform-style: preserve-3d; }
+            .card-3d-hover:hover { transform: translateY(-5px) rotateX(2deg) rotateY(-2deg); box-shadow: -5px 15px 30px -5px rgba(0,0,0,0.5), 0 0 0 1px rgba(245,158,11,0.2); }
+        }
+        .card-3d-hover:active { transform: scale(0.98); }
+
+        .tab-active { @apply bg-amber-500 text-slate-900 shadow-md font-bold; }
+        .tab-inactive { @apply bg-slate-800 text-slate-400 hover:text-slate-200 hover:bg-slate-700; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 md:p-8">
+
+    <div class="w-full max-w-5xl">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row items-center justify-between gap-4 mb-8">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-xl flex items-center justify-center text-slate-900 shadow-[0_0_15px_rgba(245,158,11,0.3)] shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-white tracking-tight">Sahamku<span class="text-amber-500">.</span></h1>
+                    <p class="text-[10px] text-slate-400 tracking-widest uppercase font-mono">Terminal Valuasi</p>
+                </div>
+            </div>
+
+            <nav class="flex p-1 bg-slate-900 rounded-xl border border-slate-800 w-full md:w-auto shadow-inner overflow-x-auto">
+                <button id="tab-watchlist" class="flex-1 md:flex-none px-5 py-2 rounded-lg text-sm transition-all tab-active whitespace-nowrap">Watchlist</button>
+                <button id="tab-portfolio" class="flex-1 md:flex-none px-5 py-2 rounded-lg text-sm transition-all tab-inactive whitespace-nowrap">Portofolio</button>
+                <button id="tab-form" class="flex-1 md:flex-none px-5 py-2 rounded-lg text-sm transition-all tab-inactive whitespace-nowrap">+ Tambah Saham</button>
+                <button id="btn-refresh" class="flex-1 md:flex-none px-5 py-2 rounded-lg text-sm transition-all tab-inactive whitespace-nowrap" title="Muat ulang data">↻</button>
+            </nav>
+        </header>
+
+        <!-- WATCHLIST -->
+        <div id="view-watchlist" class="space-y-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-bold">Pantauan Saham (Fundamental)</h2>
+                <span class="text-xs text-slate-500 font-mono" id="w-count">0 Emiten</span>
+            </div>
+            <div id="watchlist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+            <div id="empty-state" class="hidden text-center py-16">
+                <p class="text-slate-500 text-sm">Belum ada saham di watchlist. Klik "+ Tambah Saham".</p>
+            </div>
+        </div>
+
+        <!-- PORTFOLIO -->
+        <div id="view-portfolio" class="space-y-8 hidden">
+            <div class="card p-5 border-slate-700/50 bg-gradient-to-br from-slate-900 to-slate-950">
+                <h3 class="text-sm font-bold text-slate-300 mb-4 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    Alokasi Sektor
+                </h3>
+                <div class="h-4 rounded-full overflow-hidden flex w-full bg-slate-950" id="sector-bar"></div>
+                <div class="flex flex-wrap gap-4 mt-4" id="sector-legend"></div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold">Aset Berjalan</h2>
+                    <button id="btn-add-position" class="btn-primary text-sm">+ Tambah Posisi</button>
+                </div>
+                <div id="portfolio-grid" class="grid grid-cols-1 md:grid-cols-2 gap-5"></div>
+            </div>
+        </div>
+
+        <!-- FORM TAMBAH/EDIT SAHAM + AI -->
+        <div id="view-form" class="hidden">
+            <div class="max-w-2xl mx-auto card-glass p-6 md:p-8">
+                <h2 id="form-title" class="text-xl font-bold mb-6 pb-4 border-b border-slate-800">Tambah Saham Baru</h2>
+
+                <form id="stock-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label-modern">Kode Saham</label>
+                            <input id="f-Kode" type="text" required class="input-modern uppercase" placeholder="BBCA">
+                        </div>
+                        <div>
+                            <label class="label-modern">Sektor</label>
+                            <input id="f-Sektor" type="text" class="input-modern" placeholder="Perbankan">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="label-modern">Nama Perusahaan</label>
+                        <input id="f-Nama" type="text" class="input-modern" placeholder="Bank Central Asia Tbk">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="label-modern">Jumlah Saham Beredar</label>
+                            <input id="f-JumlahSaham" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">Pendapatan (Revenue)</label>
+                            <input id="f-Pendapatan" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">Laba Bersih</label>
+                            <input id="f-LabaBersih" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">Ekuitas</label>
+                            <input id="f-Ekuitas" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">Total Aset</label>
+                            <input id="f-TotalAset" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">Total Utang</label>
+                            <input id="f-TotalUtang" type="number" class="input-modern" placeholder="0">
+                        </div>
+                        <div>
+                            <label class="label-modern">PER Historis (multiple wajar)</label>
+                            <input id="f-PERHistoris" type="number" step="0.01" class="input-modern" placeholder="15">
+                        </div>
+                        <div>
+                            <label class="label-modern">PBV Historis (multiple wajar)</label>
+                            <input id="f-PBVHistoris" type="number" step="0.01" class="input-modern" placeholder="2">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="label-modern">Catatan</label>
+                        <textarea id="f-Catatan" rows="2" class="input-modern" placeholder="Opsional"></textarea>
+                    </div>
+
+                    <div class="bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                        <p class="label-modern mb-2">Preview Rasio (live)</p>
+                        <div id="ratio-preview" class="grid grid-cols-2 gap-2 text-sm"></div>
+                        <p id="preview-note" class="text-[10px] text-slate-500 mt-3"></p>
+                    </div>
+
+                    <div id="ai-panel" class="hidden bg-slate-950/50 p-4 rounded-lg border border-slate-800">
+                        <div class="flex items-center justify-between mb-2">
+                            <p class="label-modern mb-0">Analisa AI</p>
+                            <button type="button" id="btn-analyze" class="btn-secondary text-xs">Minta Analisa</button>
+                        </div>
+                        <p id="ai-result" class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed"></p>
+                        <p id="ai-meta" class="text-[10px] text-slate-500 mt-2"></p>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="submit" id="btn-save" class="flex-1 btn-primary">Simpan</button>
+                        <button type="button" id="btn-cancel" class="btn-secondary">Batal</button>
+                        <button type="button" id="btn-delete" class="hidden btn-danger">Hapus</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH POSISI PORTOFOLIO -->
+    <div id="modal-add-position" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+        <div class="card border border-slate-700 p-6 w-full max-w-sm relative shadow-2xl">
+            <button id="btn-add-pos-close" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="text-lg font-bold mb-5">+ Tambah Posisi</h3>
+            <form id="form-add-position" class="space-y-4">
+                <div>
+                    <label class="label-modern">Kode Saham</label>
+                    <select id="addpos-kode" class="input-modern"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="label-modern">Lot</label>
+                        <input id="addpos-lot" type="number" required class="input-modern" placeholder="10">
+                    </div>
+                    <div>
+                        <label class="label-modern">Avg Price (Rp)</label>
+                        <input id="addpos-price" type="number" required class="input-modern" placeholder="9000">
+                    </div>
+                </div>
+                <button type="submit" class="w-full btn-primary">Simpan Posisi</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SIMULASI AVERAGING -->
+    <div id="modal-averaging" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+        <div class="card border border-slate-700 p-6 w-full max-w-sm relative shadow-2xl">
+            <button id="btn-avg-close" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="text-lg font-bold mb-1 flex items-center gap-2"><span class="text-amber-500">⚖️</span> Simulasi Averaging</h3>
+            <p class="text-xs font-mono text-slate-400 mb-5" id="avg-modal-subtitle">—</p>
+
+            <div class="space-y-4">
+                <div class="bg-slate-950/50 p-3 rounded-lg border border-slate-800">
+                    <label class="label-modern text-amber-500">Rencana Pembelian</label>
+                    <div class="grid grid-cols-2 gap-3 mt-2">
+                        <div>
+                            <span class="text-[10px] text-slate-500">Harga (Rp)</span>
+                            <input id="sim-price" type="number" class="input-modern px-2 py-1.5 text-sm" placeholder="10000">
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-slate-500">Lot Tambahan</span>
+                            <input id="sim-lot" type="number" class="input-modern px-2 py-1.5 text-sm" placeholder="5">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800">
+                    <div class="flex justify-between items-end mb-1">
+                        <span class="text-sm text-slate-400">Prediksi Avg Baru:</span>
+                        <span id="sim-result-avg" class="text-xl font-bold text-emerald-400 font-mono">—</span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <span class="text-xs text-slate-500">Dana disiapkan:</span>
+                        <span id="sim-result-cost" class="text-xs text-slate-300 font-mono">—</span>
+                    </div>
+                </div>
+
+                <button id="btn-avg-save" class="w-full btn-primary mt-2">Simpan Hasil Averaging</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CATAT DIVIDEN -->
+    <div id="modal-dividen" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"></div>
+        <div class="card border border-slate-700 p-6 w-full max-w-sm relative shadow-2xl">
+            <button id="btn-div-close" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h3 class="text-lg font-bold mb-1 flex items-center gap-2"><span class="text-emerald-400">💰</span> Catat Dividen</h3>
+            <p class="text-xs font-mono text-slate-400 mb-5" id="div-modal-subtitle">—</p>
+            <div class="space-y-4">
+                <div>
+                    <label class="label-modern text-emerald-400">Total Rupiah Diterima</label>
+                    <input id="input-dividen" type="number" class="input-modern px-3 py-2" placeholder="Contoh: 1500000">
+                </div>
+                <button id="btn-div-save" class="w-full btn-primary mt-2">Simpan Pendapatan</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+</body>
+</html>
