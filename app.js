@@ -20,6 +20,7 @@ let portfolio = [];
 let editingKode = null;
 let currentAvgTarget = null;
 let currentDivTarget = null;
+let referensi = {}; // kamus Kode -> {Nama, Sektor}, dipakai untuk auto-isi form
 
 // ===== Backend call =====
 async function callBackend(action, params = {}, method = 'GET', body = null) {
@@ -51,7 +52,20 @@ document.addEventListener('DOMContentLoaded', () => {
   bindDividendModal();
   bindAddPositionModal();
   loadWatchlist();
+  loadReferensi();
 });
+
+// Kamus Kode->Nama->Sektor untuk auto-isi form. Gagal ambil pun tidak fatal --
+// form tetap bisa diisi manual seperti biasa, cuma auto-isinya yang tidak jalan.
+async function loadReferensi() {
+  if (!apiReady()) return;
+  try {
+    const res = await callBackend('referensi');
+    if (res.ok) referensi = res.data;
+  } catch (err) {
+    console.warn('Sahamku: gagal memuat kamus referensi', err);
+  }
+}
 
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
@@ -209,10 +223,28 @@ function bindForm() {
   document.getElementById('btn-cancel').addEventListener('click', () => switchTab('watchlist'));
   document.getElementById('btn-delete').addEventListener('click', handleDelete);
   document.getElementById('btn-analyze').addEventListener('click', handleAnalyze);
+  document.getElementById('f-Kode').addEventListener('input', handleKodeAutofill);
 
   ['JumlahSaham', 'Pendapatan', 'LabaBersih', 'Ekuitas', 'TotalAset', 'TotalUtang'].forEach(id => {
     document.getElementById(`f-${id}`).addEventListener('input', updatePreview);
   });
+}
+
+// Auto-isi Nama & Sektor begitu kode saham ketemu di kamus Referensi. Cuma jalan
+// untuk mode "Tambah Saham Baru" (bukan Edit -- field Kode di-disable saat Edit,
+// dan Nama/Sektor sudah terisi dari data tersimpan, jadi tidak perlu ditimpa).
+// Kalau kode tidak ada di kamus, biarkan kosong -- user isi manual seperti biasa,
+// dan begitu disimpan, kamus otomatis belajar dari input itu untuk lain kali.
+function handleKodeAutofill(e) {
+  if (editingKode) return;
+  const kode = e.target.value.toUpperCase().trim();
+  const ref = referensi[kode];
+  if (!ref) return;
+
+  const namaEl = document.getElementById('f-Nama');
+  const sektorEl = document.getElementById('f-Sektor');
+  if (!namaEl.value.trim()) namaEl.value = ref.Nama || '';
+  if (!sektorEl.value.trim()) sektorEl.value = ref.Sektor || '';
 }
 
 function openForm(kode) {
@@ -309,6 +341,7 @@ async function handleSubmit(e) {
     const res = await callBackend('upsert', {}, 'POST', { data });
     if (!res.ok) throw new Error(res.error);
     await loadWatchlist();
+    loadReferensi(); // refresh kamus di background, tidak perlu ditunggu
     switchTab('watchlist');
   } catch (err) {
     alert('Gagal menyimpan: ' + err.message);
