@@ -223,6 +223,7 @@ function bindForm() {
   document.getElementById('btn-cancel').addEventListener('click', () => switchTab('watchlist'));
   document.getElementById('btn-delete').addEventListener('click', handleDelete);
   document.getElementById('btn-analyze').addEventListener('click', handleAnalyze);
+  document.getElementById('btn-clear-analysis').addEventListener('click', handleClearAnalysis);
   document.getElementById('f-Kode').addEventListener('input', handleKodeAutofill);
 
   ['JumlahSaham', 'Pendapatan', 'LabaBersih', 'Ekuitas', 'TotalAset', 'TotalUtang'].forEach(id => {
@@ -393,6 +394,34 @@ async function handleAnalyze() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'Minta Analisa';
+  }
+}
+
+async function handleClearAnalysis() {
+  if (!editingKode) return;
+  if (!confirm(`Hapus analisa AI untuk ${editingKode}?`)) return;
+
+  const btn = document.getElementById('btn-clear-analysis');
+  const aiResult = document.getElementById('ai-result');
+  const aiMeta = document.getElementById('ai-meta');
+
+  btn.disabled = true;
+  try {
+    const res = await callBackend('clear_analysis', {}, 'POST', { kode: editingKode });
+    if (!res.ok) throw new Error(res.error);
+
+    aiResult.textContent = 'Belum ada analisa. Klik "Minta Analisa" di atas.';
+    aiMeta.textContent = '';
+
+    const idx = stocks.findIndex(s => s.Kode === editingKode);
+    if (idx > -1) {
+      stocks[idx].AnalisisAI = '';
+      stocks[idx].AnalisisUpdatedAt = '';
+    }
+  } catch (err) {
+    alert('Gagal menghapus analisa: ' + err.message);
+  } finally {
+    btn.disabled = false;
   }
 }
 
