@@ -175,7 +175,10 @@
                     <div id="ai-panel" class="hidden bg-slate-950/50 p-4 rounded-lg border border-slate-800">
                         <div class="flex items-center justify-between mb-2">
                             <p class="label-modern mb-0">Analisa AI</p>
-                            <button type="button" id="btn-analyze" class="btn-secondary text-xs">Minta Analisa</button>
+                            <div class="flex gap-2">
+                                <button type="button" id="btn-clear-analysis" class="btn-secondary text-xs">Hapus</button>
+                                <button type="button" id="btn-analyze" class="btn-secondary text-xs">Minta Analisa</button>
+                            </div>
                         </div>
                         <p id="ai-result" class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed"></p>
                         <p id="ai-meta" class="text-[10px] text-slate-500 mt-2"></p>
