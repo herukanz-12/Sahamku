@@ -378,6 +378,10 @@ function openForm(kode) {
   document.getElementById('consult-input').value = '';
   document.getElementById('consult-result').textContent = '';
   document.getElementById('consult-meta').textContent = '';
+  
+  if (document.getElementById('consult-target-box')) {
+      document.getElementById('consult-target-box').classList.add('hidden');
+  }
 
   const aiResult = document.getElementById('ai-result');
   const aiMeta = document.getElementById('ai-meta');
@@ -843,6 +847,11 @@ async function handleConsult() {
   const metaEl = document.getElementById('consult-meta');
   const context = document.getElementById('consult-input').value.trim();
 
+  // Ambil elemen UI untuk Box Target
+  const targetBox = document.getElementById('consult-target-box');
+  const tBeli = document.getElementById('target-beli');
+  const tJual = document.getElementById('target-jual');
+
   if (!context) {
     alert('Ceritakan dulu situasi/pertanyaan kamu di kotak teks.');
     return;
@@ -852,12 +861,37 @@ async function handleConsult() {
   btn.textContent = 'Memproses...';
   resultEl.textContent = 'Menunggu jawaban dari AI...';
   metaEl.textContent = '';
+  
+  // Sembunyikan dan reset box sebelum memanggil API
+  targetBox.classList.add('hidden');
+  tBeli.textContent = '-';
+  tJual.textContent = '-';
 
   try {
     const res = await callBackend('consult', {}, 'POST', { kode: editingKode, context });
     if (!res.ok) throw new Error(res.error);
-    resultEl.textContent = res.data.jawaban;
-    metaEl.textContent = 'Ini bantu mikir, bukan rekomendasi beli/jual — keputusan tetap di kamu.';
+    
+    let jawabanAI = res.data.jawaban || '';
+
+    // Deteksi jika AI mengirimkan format khusus target harga
+    if (jawabanAI.includes('TARGET|')) {
+      const parts = jawabanAI.split('TARGET|');
+      resultEl.textContent = parts[0].trim(); // Tampilkan teks analisa utamanya
+
+      // Ekstrak harga beli dan jual
+      const targetData = parts[1].trim(); // Formatnya: Beli: 100|Jual: 110
+      const dataParts = targetData.split('|');
+      dataParts.forEach(p => {
+        if (p.trim().startsWith('Beli:')) tBeli.textContent = p.replace('Beli:', '').trim();
+        if (p.trim().startsWith('Jual:')) tJual.textContent = p.replace('Jual:', '').trim();
+      });
+      targetBox.classList.remove('hidden'); // Munculkan box
+    } else {
+      // Jika AI gagal mengirim format khusus, tampilkan teks utuh saja
+      resultEl.textContent = jawabanAI;
+    }
+
+    metaEl.textContent = 'Ini analisa AI, bukan instruksi mutlak — sesuaikan dengan risk profil kamu.';
   } catch (err) {
     resultEl.textContent = '';
     alert('Gagal mendapatkan pertimbangan: ' + err.message);
