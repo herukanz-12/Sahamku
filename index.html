@@ -75,10 +75,20 @@
 
         <!-- WATCHLIST -->
         <div id="view-watchlist" class="space-y-6">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between flex-wrap gap-3">
                 <h2 class="text-lg font-bold">Pantauan Saham (Fundamental)</h2>
                 <span class="text-xs text-slate-500 font-mono" id="w-count">0 Emiten</span>
             </div>
+
+            <div class="flex items-center gap-2">
+                <span class="label-modern mb-0">Mode Tampilan:</span>
+                <div class="flex p-1 bg-slate-900 rounded-lg border border-slate-800">
+                    <button id="mode-swing" class="px-4 py-1.5 rounded-md text-xs transition-all tab-active">Swing / Jangka Panjang</button>
+                    <button id="mode-scalping" class="px-4 py-1.5 rounded-md text-xs transition-all tab-inactive">Scalping / Jangka Pendek</button>
+                </div>
+            </div>
+            <p id="mode-note" class="text-[11px] text-slate-500 -mt-2"></p>
+
             <div id="watchlist-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
             <div id="empty-state" class="hidden text-center py-16">
                 <p class="text-slate-500 text-sm">Belum ada saham di watchlist. Klik "+ Tambah Saham".</p>
@@ -182,6 +192,19 @@
                         </div>
                         <p id="ai-result" class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed"></p>
                         <p id="ai-meta" class="text-[10px] text-slate-500 mt-2"></p>
+                    </div>
+
+                    <div id="consult-panel" class="hidden bg-slate-950/50 p-4 rounded-lg border border-amber-500/20">
+                        <p class="label-modern text-amber-500 mb-1">Minta Pertimbangan (lagi ragu?)</p>
+                        <p class="text-[11px] text-slate-500 mb-3">
+                            Ceritakan situasi kamu — harga/antrian yang kamu lihat di Stockbit, berita yang bikin ragu,
+                            atau alasan kamu mau transaksi. AI akan bantu kamu mikir lebih jernih (nanya balik hal yang
+                            perlu dicek), <span class="text-slate-400">bukan</span> ngasih keputusan beli/jual.
+                        </p>
+                        <textarea id="consult-input" rows="4" class="input-modern text-sm" placeholder="Contoh: Saya lihat BBCA di Stockbit harga 8500, antrian beli lebih tebal dari antrian jual. Tapi saya ragu karena kemarin ada berita suku bunga naik. Menurut kamu gimana?"></textarea>
+                        <button type="button" id="btn-consult" class="btn-primary text-xs mt-3 w-full">Minta Pertimbangan</button>
+                        <div id="consult-result" class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed mt-4"></div>
+                        <p id="consult-meta" class="text-[10px] text-slate-500 mt-2"></p>
                     </div>
 
                     <div class="flex gap-2 pt-2">
