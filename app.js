@@ -20,7 +20,8 @@ let portfolio = [];
 let editingKode = null;
 let currentAvgTarget = null;
 let currentDivTarget = null;
-let referensi = {}; // kamus Kode -> {Nama, Sektor}, dipakai untuk auto-isi form
+let referensi = {};
+let watchlistMode = 'swing'; // 'swing' | 'scalping'
 
 // ===== Backend call =====
 async function callBackend(action, params = {}, method = 'GET', body = null) {
@@ -83,6 +84,23 @@ function bindNav() {
   document.getElementById('tab-form').addEventListener('click', () => openForm(null));
   document.getElementById('btn-refresh').addEventListener('click', () => { loadWatchlist(); loadPortfolio(); });
   document.getElementById('btn-add-position').addEventListener('click', openAddPositionModal);
+  document.getElementById('mode-swing').addEventListener('click', () => setWatchlistMode('swing'));
+  document.getElementById('mode-scalping').addEventListener('click', () => setWatchlistMode('scalping'));
+  setWatchlistMode('swing');
+}
+
+function setWatchlistMode(mode) {
+  watchlistMode = mode;
+  document.getElementById('mode-swing').classList.toggle('tab-active', mode === 'swing');
+  document.getElementById('mode-swing').classList.toggle('tab-inactive', mode !== 'swing');
+  document.getElementById('mode-scalping').classList.toggle('tab-active', mode === 'scalping');
+  document.getElementById('mode-scalping').classList.toggle('tab-inactive', mode !== 'scalping');
+
+  document.getElementById('mode-note').textContent = mode === 'swing'
+    ? 'Fokus rasio fundamental (ROE, PER, DER, dst) & harga wajar tersirat — cocok untuk keputusan pegang jangka menengah/panjang.'
+    : 'Fokus likuiditas & volatilitas 30 hari terakhir — menilai karakter tradability saham, BUKAN sinyal beli/jual atau prediksi harga.';
+
+  renderWatchlist();
 }
 
 function switchTab(tab) {
@@ -127,12 +145,48 @@ function renderWatchlist() {
   empty.classList.add('hidden');
 
   grid.innerHTML = stocks.map(s => stockCard(s)).join('');
+
   grid.querySelectorAll('[data-kode]').forEach(el => {
     el.addEventListener('click', () => openForm(el.dataset.kode));
   });
+
+  if (watchlistMode === 'scalping') {
+    grid.querySelectorAll('.btn-liq').forEach(btn => {
+      btn.addEventListener('click', (e) => { e.stopPropagation(); handleCheckLiquidity(btn.dataset.liqKode, btn); });
+    });
+  }
+}
+
+async function handleCheckLiquidity(kode, btn) {
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Mengecek...';
+
+  try {
+    const res = await callBackend('check_liquidity', {}, 'POST', { kode });
+    if (!res.ok) throw new Error(res.error);
+
+    const idx = stocks.findIndex(s => s.Kode === kode);
+    if (idx > -1) {
+      stocks[idx].Volatilitas30H = res.data.volatilitas;
+      stocks[idx].AvgVolume30H = res.data.avgVolume;
+      stocks[idx].CocokJangkaPendek = res.data.klasifikasi;
+      stocks[idx].LikuiditasUpdatedAt = res.data.updatedAt;
+    }
+    renderWatchlist();
+  } catch (err) {
+    alert('Gagal mengecek likuiditas: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
 }
 
 function stockCard(s) {
+  if (watchlistMode === 'scalping') return stockCardScalping(s);
+  return stockCardSwing(s);
+}
+
+function stockCardSwing(s) {
   const harga = s.Harga ? formatRp(s.Harga) : '—';
   const ratios = ['ROE', 'PER', 'DER', 'PBV'];
   const fairPrices = [s.HargaWajarPER, s.HargaWajarPBV].filter(Boolean);
@@ -172,6 +226,69 @@ function stockCard(s) {
       </div>
     </div>
   `;
+}
+
+const STYLE_BADGE = {
+  'Cocok Jangka Pendek': 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+  'Netral': 'bg-slate-700/50 text-slate-400 border-slate-700',
+  'Cocok Jangka Panjang': 'bg-sky-500/10 text-sky-400 border-sky-500/30',
+};
+
+function stockCardScalping(s) {
+  const harga = s.Harga ? formatRp(s.Harga) : '—';
+  const hasData = s.Volatilitas30H !== null && s.Volatilitas30H !== undefined && s.Volatilitas30H !== '' &&
+                  s.AvgVolume30H !== null && s.AvgVolume30H !== undefined && s.AvgVolume30H !== '';
+  const klasifikasi = s.CocokJangkaPendek;
+  const badgeClass = STYLE_BADGE[klasifikasi] || 'bg-slate-700/50 text-slate-400 border-slate-700';
+
+  const updatedText = s.LikuiditasUpdatedAt
+    ? `Update: ${new Date(s.LikuiditasUpdatedAt).toLocaleDateString('id-ID')}`
+    : 'Belum pernah dicek';
+
+  return `
+    <div class="card p-5 border-slate-800/80 bg-gradient-to-b from-slate-900 to-slate-950" data-liq-card="${s.Kode}">
+      <div class="flex justify-between items-start mb-2">
+        <div class="cursor-pointer" data-kode="${s.Kode}">
+          <div class="flex items-center gap-2 mb-1">
+            <h3 class="text-xl font-black text-white">${s.Kode}</h3>
+            ${klasifikasi ? `<span class="px-2 py-0.5 rounded text-[9px] font-bold tracking-wider border uppercase ${badgeClass}">${klasifikasi}</span>` : ''}
+          </div>
+          <p class="text-xs text-slate-400 truncate max-w-[150px]">${s.Nama || '—'}</p>
+        </div>
+        <p class="font-mono text-sm font-bold text-slate-200">${harga}</p>
+      </div>
+
+      <div class="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent my-3 opacity-50"></div>
+
+      ${hasData ? `
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <p class="text-[10px] text-slate-500 uppercase mb-1">Volatilitas Harian</p>
+            <p class="font-mono text-sm text-slate-200">${s.Volatilitas30H}%</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[10px] text-slate-500 uppercase mb-1">Avg Volume/hari</p>
+            <p class="font-mono text-sm text-slate-200">${formatCompact(s.AvgVolume30H)}</p>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-600 mb-3">${updatedText} — data historis 30 hari, bukan sinyal beli/jual.</p>
+      ` : `
+        <p class="text-xs text-slate-500 mb-3">Belum ada data likuiditas/volatilitas untuk saham ini.</p>
+      `}
+
+      <button data-liq-kode="${s.Kode}" class="btn-liq w-full py-2 rounded border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors text-xs font-bold">
+        ${hasData ? '↻ Cek Ulang' : 'Cek Likuiditas & Volatilitas'}
+      </button>
+    </div>
+  `;
+}
+
+function formatCompact(n) {
+  n = Number(n) || 0;
+  if (n >= 1000000000) return (n / 1000000000).toFixed(1) + 'M';
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'jt';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'rb';
+  return String(n);
 }
 
 function gaugeRow(key, value) {
@@ -224,6 +341,7 @@ function bindForm() {
   document.getElementById('btn-delete').addEventListener('click', handleDelete);
   document.getElementById('btn-analyze').addEventListener('click', handleAnalyze);
   document.getElementById('btn-clear-analysis').addEventListener('click', handleClearAnalysis);
+  document.getElementById('btn-consult').addEventListener('click', handleConsult);
   document.getElementById('f-Kode').addEventListener('input', handleKodeAutofill);
 
   ['JumlahSaham', 'Pendapatan', 'LabaBersih', 'Ekuitas', 'TotalAset', 'TotalUtang'].forEach(id => {
@@ -254,7 +372,12 @@ function openForm(kode) {
   form.reset();
   document.getElementById('btn-delete').classList.toggle('hidden', !kode);
   document.getElementById('ai-panel').classList.toggle('hidden', !kode);
+  document.getElementById('consult-panel').classList.toggle('hidden', !kode);
   document.getElementById('form-title').textContent = kode ? `Edit ${kode}` : 'Tambah Saham Baru';
+
+  document.getElementById('consult-input').value = '';
+  document.getElementById('consult-result').textContent = '';
+  document.getElementById('consult-meta').textContent = '';
 
   const aiResult = document.getElementById('ai-result');
   const aiMeta = document.getElementById('ai-meta');
@@ -709,5 +832,37 @@ async function saveDividend() {
     await loadPortfolio();
   } catch (err) {
     alert('Gagal mencatat dividen: ' + err.message);
+  }
+}
+
+// ===== Minta Pertimbangan (diskusi bebas, bukan sinyal beli/jual) =====
+async function handleConsult() {
+  if (!editingKode) return;
+  const btn = document.getElementById('btn-consult');
+  const resultEl = document.getElementById('consult-result');
+  const metaEl = document.getElementById('consult-meta');
+  const context = document.getElementById('consult-input').value.trim();
+
+  if (!context) {
+    alert('Ceritakan dulu situasi/pertanyaan kamu di kotak teks.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Memproses...';
+  resultEl.textContent = 'Menunggu jawaban dari AI...';
+  metaEl.textContent = '';
+
+  try {
+    const res = await callBackend('consult', {}, 'POST', { kode: editingKode, context });
+    if (!res.ok) throw new Error(res.error);
+    resultEl.textContent = res.data.jawaban;
+    metaEl.textContent = 'Ini bantu mikir, bukan rekomendasi beli/jual — keputusan tetap di kamu.';
+  } catch (err) {
+    resultEl.textContent = '';
+    alert('Gagal mendapatkan pertimbangan: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Minta Pertimbangan';
   }
 }
