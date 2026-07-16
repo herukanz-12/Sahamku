@@ -391,7 +391,7 @@ function openForm(kode) {
   if (kode) {
     const s = stocks.find(x => x.Kode === kode);
     if (s) {
-      ['Kode', 'Nama', 'Sektor', 'JumlahSaham', 'Pendapatan', 'LabaBersih', 'Ekuitas', 'TotalAset', 'TotalUtang', 'Catatan', 'PERHistoris', 'PBVHistoris']
+      ['Kode', 'Nama', 'Sektor', 'JumlahSaham', 'Pendapatan', 'LabaBersih', 'Ekuitas', 'TotalAset', 'TotalUtang', 'Catatan', 'PERHistoris', 'PBVHistoris', 'PlanBeli', 'PlanJual']
         .forEach(f => { document.getElementById(`f-${f}`).value = s[f] ?? ''; });
       document.getElementById('f-Kode').disabled = true;
 
@@ -424,6 +424,8 @@ function readForm() {
     Catatan: document.getElementById('f-Catatan').value.trim(),
     PERHistoris: document.getElementById('f-PERHistoris').value,
     PBVHistoris: document.getElementById('f-PBVHistoris').value,
+    PlanBeli: document.getElementById('f-PlanBeli').value,
+    PlanJual: document.getElementById('f-PlanJual').value,
   };
 }
 
