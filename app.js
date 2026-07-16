@@ -271,7 +271,7 @@ function stockCardScalping(s) {
             <p class="font-mono text-sm text-slate-200">${formatCompact(s.AvgVolume30H)}</p>
           </div>
         </div>
-        <p class="text-[10px] text-slate-600 mb-3">${updatedText} — data historis 30 hari, bukan sinyal beli/jual.</p>
+        <p class="text-[10px] text-slate-400 mb-3">${updatedText} — data historis 30 hari.</p>
       ` : `
         <p class="text-xs text-slate-500 mb-3">Belum ada data likuiditas/volatilitas untuk saham ini.</p>
       `}
