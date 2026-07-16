@@ -204,6 +204,23 @@
                         <textarea id="consult-input" rows="4" class="input-modern text-sm" placeholder="Contoh: Saya lihat BBCA di Stockbit harga 8500, antrian beli lebih tebal dari antrian jual. Tapi saya ragu karena kemarin ada berita suku bunga naik. Menurut kamu gimana?"></textarea>
                         <button type="button" id="btn-consult" class="btn-primary text-xs mt-3 w-full">Minta Pertimbangan</button>
                         <div id="consult-result" class="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed mt-4"></div>
+                        
+                        <!-- TAMBAHAN BARU: Box Target Eksekusi -->
+                        <div id="consult-target-box" class="hidden mt-4 p-3 bg-slate-900 border border-slate-700 rounded-lg shadow-inner">
+                            <p class="text-[10px] uppercase text-slate-500 font-bold mb-2">Skenario Eksekusi AI</p>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-slate-950 p-2 rounded border border-emerald-500/20">
+                                    <span class="text-[10px] text-slate-500 block mb-1">Area Beli</span>
+                                    <span id="target-beli" class="font-mono text-emerald-400 font-bold text-sm">-</span>
+                                </div>
+                                <div class="bg-slate-950 p-2 rounded border border-rose-500/20">
+                                    <span class="text-[10px] text-slate-500 block mb-1">Target Jual / TP</span>
+                                    <span id="target-jual" class="font-mono text-rose-400 font-bold text-sm">-</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- SELESAI TAMBAHAN -->
+
                         <p id="consult-meta" class="text-[10px] text-slate-500 mt-2"></p>
                     </div>
 
